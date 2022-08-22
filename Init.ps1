@@ -1,3 +1,6 @@
+# Call this script with 
+#   iex (irm https://tinyurl.com/osdcloud)
+
 # Utilizing David Segura's functions
 iex (irm sandbox.osdcloud.com)
 
