@@ -98,30 +98,30 @@ function InstallSoftware {
    
 
 }
+InstallSoftware
+# Switch ($WindowsPhase) {
+#     "WinPE" {
+#         Start-OSDCloud -OSName 'Windows 10 21H2 x64' -OSEdition Enterprise -OSLanguage en-us -OSLicense Volume -Restart
+#     }
 
-Switch ($WindowsPhase) {
-    "WinPE" {
-        Start-OSDCloud -OSName 'Windows 10 21H2 x64' -OSEdition Enterprise -OSLanguage en-us -OSLicense Volume -Restart
-    }
+#     "OOBE" {
+#         AddCapability -Name "Print.Management*"
+#         RemoveAppx
+#         UpdateDrivers
+#         UpdateWindows
+#         Write-Host -ForegroundColor "Congratz! All done!"
+#     }
 
-    "OOBE" {
-        AddCapability
-        RemoveAppx
-        UpdateDrivers
-        UpdateWindows
-        Write-Host -ForegroundColor "Congratz! All done!"
-    }
+#     "Windows" {
+#         Write-Host -ForegroundColor Cyan "No functions were automatically called."
+#         Write-Host -ForegroundColor Gray @'
+# #        AddCapability
+# #        NetFX
+# #        RemoveAppx
+# #        Rsat
+# #        UpdateDrivers
+# #        UpdateWindows
+# '@
 
-    "Windows" {
-        Write-Host -ForegroundColor Cyan "No functions were automatically called."
-        Write-Host -ForegroundColor Gray @'
-#        AddCapability
-#        NetFX
-#        RemoveAppx
-#        Rsat
-#        UpdateDrivers
-#        UpdateWindows
-'@
-
-    }
-}
+#     }
+# }
