@@ -58,12 +58,12 @@ function Get-M365Config {
   </Configuration>
 '@
     $config | out-file "$Destination"
-    
 }
 
 function InstallSoftware {
     $Destination = $env:temp
     Get-M365Config -destination "$Destination\m365config.xml"
+    
     $Software = @(
         @{
             Name = "Google Chrome"
@@ -77,6 +77,7 @@ function InstallSoftware {
             Parameters = "/configure $Destination\m365config.xml"
         }
     )
+
     foreach ( $app in $Software) {
         $WebClient = New-Object System.Net.WebClient
         $FileName = $app.URI.Substring($app.URI.LastIndexOf('/')+1)
@@ -86,42 +87,36 @@ function InstallSoftware {
         cd $Destination
         switch ($Ext) {
             "msi" {
-                Start-Process msiexec.exe -ArgumentList $app.Parameters
+                Start-Process msiexec.exe -ArgumentList $app.Parameters -Wait
             }
             "exe" {
-                Start-Process $FileName -ArgumentList $app.Parameters
+                Start-Process $FileName -ArgumentList $app.Parameters -Wait
             }
         }
-
-        pause
     }
-   
-
 }
-InstallSoftware
-# Switch ($WindowsPhase) {
-#     "WinPE" {
-#         Start-OSDCloud -OSName 'Windows 10 21H2 x64' -OSEdition Enterprise -OSLanguage en-us -OSLicense Volume -Restart
-#     }
 
-#     "OOBE" {
-#         AddCapability -Name "Print.Management*"
-#         RemoveAppx
-#         UpdateDrivers
-#         UpdateWindows
-#         Write-Host -ForegroundColor "Congratz! All done!"
-#     }
+Switch ($WindowsPhase) {
+    "WinPE" {
+        Start-OSDCloud -OSName 'Windows 10 21H2 x64' -OSEdition Enterprise -OSLanguage en-us -OSLicense Volume -Restart
+    }
 
-#     "Windows" {
-#         Write-Host -ForegroundColor Cyan "No functions were automatically called."
-#         Write-Host -ForegroundColor Gray @'
-# #        AddCapability
-# #        NetFX
-# #        RemoveAppx
-# #        Rsat
-# #        UpdateDrivers
-# #        UpdateWindows
-# '@
+    "OOBE" {
+        AddCapability -Name "Print.Management*"
+        RemoveAppx people,xbox,phone,GamingApp
+        NetFX
+        UpdateDrivers
+        UpdateWindows
+        Write-Output "If this machine is to be Domain joined. Use the command `'InstallSoftware`'."
+    }
 
-#     }
-# }
+    "Windows" { 
+#        AddCapability
+#        NetFX
+#        RemoveAppx
+#        Rsat
+#        UpdateDrivers
+#        UpdateWindows
+
+    }
+}
