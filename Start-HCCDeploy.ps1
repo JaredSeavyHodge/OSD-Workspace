@@ -157,15 +157,15 @@ Switch ($WindowsPhase) {
 
     "OOBE" {
 
+        $ComputerName = Read-Host "Computer Name:"
+        $Options = "Azure AD", "Family.hccfl.edu", "Academic.hccfl.edu", "None"
+        $Result = ChoiceMenu -Title "Domain to Join:" -Message "Azure AD should be chosen most of the time." -Options $Options -Default 3
+
         AddCapability -Name "Print.Management*"
         RemoveAppx people,xbox,phone,GamingApp
         NetFX
         UpdateDrivers
         UpdateWindows
-
-        $ComputerName = Read-Host "Computer Name:"
-        $Options = "Azure AD", "Family.hccfl.edu", "Academic.hccfl.edu", "None"
-        $Result = ChoiceMenu -Title "Domain to Join:" -Message "Azure AD should be chosen most of the time." -Options $Options -Default 3
 
         switch ($Result) {
             0 {
