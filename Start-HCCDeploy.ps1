@@ -166,14 +166,17 @@ Switch ($WindowsPhase) {
     "OOBE" {
 
         if ($Global:RegAutoPilot.CloudAssignedForcedEnrollment -eq 1) {
-            Write-Host -ForegroundColor Cyan "This device has an Autopilot Profile"
             Write-Host -ForegroundColor Yellow "Press enter to Proceed with Autopilot. Otherwise, power off the machine and ask your administrator to deregister this device from Autopilot if necessary."
             pause
             Write-Host -ForegroundColor DarkGray "Proceeding with Windows Autopilot."
             Write-Host -ForegroundColor Cyan "Specify a computer name.  The rename will not complete until rebooted."
             $ComputerName = Read-Host "Computer Name"
 
-            #DoCustomizations
+            DoCustomizations
+            if ($ComputerName) {
+                Write-Host -ForegroundColor Cyan "The device is ready for provisiong with Windows Autopilot. Press enter to reboot, completing the device rename and continue through OOBE."
+                Rename-Computer $ComputerName -Force -Restart
+            }
         }
         else {
             Write-Host -ForegroundColor Cyan "This device does not have an Autopilot Profile. Choose 'Azure AD' to begin registering the device with Autopilot."
@@ -188,34 +191,32 @@ Switch ($WindowsPhase) {
                     if ($ComputerName) {
                         Rename-Computer $ComputerName -Force
                     }
-                    #DoCustomizations
+                    DoCustomizations
                     iex ( iwr https://raw.githubusercontent.com/JaredSeavyHodge/APEnroller/master/AutoPilot_Register.ps1 -UseBasicParsing )
                 }
                 1 {
                     Write-Output "Preparing the computer for on-prem AD join."
                     Write-Output "Installing Software"
                     InstallSoftware
+                    DoCustomizations
                     TryDomainJoin -ComputerName $ComputerName -Domain "family.hccfl.edu"
                 }
                 2 {
                     Write-Output "Preparing the computer for on-prem AD join."
                     Write-Output "Installing Software"
                     InstallSoftware
+                    DoCustomizations
                     TryDomainJoin -ComputerName $ComputerName -Domain "academic.hccfl.edu"
                 }
                 3 {
                     Write-Warning "Not joining a domain.  Renaming the computer and rebooting."
                     if ($ComputerName) {
+                        DoCustomizations
                         Rename-Computer $ComputerName -Force -Restart
                     }
                 }
             }
-
-            # DoCustomizations
         }
-
-        
-
     }
 
     "Windows" { 
