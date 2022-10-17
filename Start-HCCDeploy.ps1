@@ -150,6 +150,14 @@ function TryDomainJoin {
     
 }
 
+function DoCustomizations {
+    AddCapability -Name "Print.Management*"
+    RemoveAppx people,xbox,phone,GamingApp
+    NetFX
+    UpdateDrivers
+    UpdateWindows
+}
+
 Switch ($WindowsPhase) {
     "WinPE" {
         Start-OSDCloud -OSName 'Windows 10 21H2 x64' -OSEdition Enterprise -OSLanguage en-us -OSLicense Volume -Restart
@@ -157,48 +165,61 @@ Switch ($WindowsPhase) {
 
     "OOBE" {
 
-        $ComputerName = Read-Host "Computer Name:"
-        $Options = "Azure AD", "Family.hccfl.edu", "Academic.hccfl.edu", "None"
-        $Result = ChoiceMenu -Title "Domain to Join:" -Message "Azure AD should be chosen most of the time." -Options $Options -Default 3
+        if ($Global:RegAutoPilot.CloudAssignedForcedEnrollment -eq 1) {
+            Write-Host -ForegroundColor Cyan "This device has an Autopilot Profile"
+            Write-Host -ForegroundColor Yellow "Press enter to Proceed with Autopilot. Otherwise, power off the machine and ask your administrator to deregister this device from Autopilot if necessary."
+            pause
+            Write-Host -ForegroundColor DarkGray "Proceeding with Windows Autopilot."
+            Write-Host -ForegroundColor Cyan "Specify a computer name.  The rename will not complete until rebooted."
+            $ComputerName = Read-Host "Computer Name"
 
-        AddCapability -Name "Print.Management*"
-        RemoveAppx people,xbox,phone,GamingApp
-        NetFX
-        UpdateDrivers
-        UpdateWindows
-
-        switch ($Result) {
-            0 {
-                Install-Module AADInternals
-                Get-AADIntAccessTokenForAADJoin -BPRT $BPRT -SaveToCache
-                Join-AADIntDeviceToAzureAD -DeviceName $ComputerName
-            }
-            1 {
-                Write-Output "Preparing the computer for on-prem AD join."
-                Write-Output "Installing Software"
-                InstallSoftware
-                TryDomainJoin -ComputerName $ComputerName -Domain "family.hccfl.edu"
-            }
-            2 {
-                Write-Output "Preparing the computer for on-prem AD join."
-                Write-Output "Installing Software"
-                InstallSoftware
-                TryDomainJoin -ComputerName $ComputerName -Domain "academic.hccfl.edu"
-            }
-            3 {
-                Write-Warning "Not joining a domain.  Renaming the computer and rebooting."
-                Rename-Computer $ComputerName -Force -Restart
-            }
+            #DoCustomizations
         }
+        else {
+            Write-Host -ForegroundColor Cyan "This device does not have an Autopilot Profile. Choose 'Azure AD' to begin registering the device with Autopilot."
+            $Options = "Azure AD", "Family.hccfl.edu", "Academic.hccfl.edu", "None"
+            $Result = ChoiceMenu -Title "Domain to Join:" -Message "Azure AD should be chosen most of the time." -Options $Options -Default 3
+            
+            Write-Host -ForegroundColor Cyan "Specify the computer name."
+            $ComputerName = Read-Host "Computer Name"
+            
+            switch ($Result) {
+                0 {
+                    if ($ComputerName) {
+                        Rename-Computer $ComputerName -Force
+                    }
+                    #DoCustomizations
+                    iex ( iwr https://raw.githubusercontent.com/JaredSeavyHodge/APEnroller/master/AutoPilot_Register.ps1 -UseBasicParsing )
+                }
+                1 {
+                    Write-Output "Preparing the computer for on-prem AD join."
+                    Write-Output "Installing Software"
+                    InstallSoftware
+                    TryDomainJoin -ComputerName $ComputerName -Domain "family.hccfl.edu"
+                }
+                2 {
+                    Write-Output "Preparing the computer for on-prem AD join."
+                    Write-Output "Installing Software"
+                    InstallSoftware
+                    TryDomainJoin -ComputerName $ComputerName -Domain "academic.hccfl.edu"
+                }
+                3 {
+                    Write-Warning "Not joining a domain.  Renaming the computer and rebooting."
+                    if ($ComputerName) {
+                        Rename-Computer $ComputerName -Force -Restart
+                    }
+                }
+            }
+
+            # DoCustomizations
+        }
+
+        
+
     }
 
     "Windows" { 
-#        AddCapability
-#        NetFX
-#        RemoveAppx
-#        Rsat
-#        UpdateDrivers
-#        UpdateWindows
+    #  DoCustomizations
 
     }
 }
